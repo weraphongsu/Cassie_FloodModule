@@ -1,0 +1,4 @@
+earthengine-api==0.1.350
+geemap==0.19.6
+ipywidgets<8.0.0
+ipython==8.15.0
