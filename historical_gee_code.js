@@ -1,6 +1,6 @@
 
-		Map.setCenter(99.50454711914062, 17.05415881917247, 7);
-		var geoJsonBoundaryGeometry = ee.Geometry.Polygon([99.50454711914062,17.05415881917247,99.50454711914062,18.80361812368382,101.25411987304688,18.80361812368382,101.25411987304688,17.05415881917247,99.50454711914062,17.05415881917247]);
+		Map.setCenter(97.75360107421875, 13.553886614976648, 7);
+		var geoJsonBoundaryGeometry = ee.Geometry.Polygon([97.75360107421875,13.553886614976648,97.75360107421875,15.304054942239205,99.50454711914062,15.304054942239205,99.50454711914062,13.553886614976648,97.75360107421875,13.553886614976648]);
 		var areaBoundary = ee.FeatureCollection([ee.Feature(geoJsonBoundaryGeometry)]);
 
 		var	jrcSurfaceWater = ee.ImageCollection('JRC/GSW1_3/YearlyHistory').filter(ee.Filter.calendarRange(2010, 2010, 'year')).map(function(image) {return image.select('waterClass').eq(3);}).sum().clip(areaBoundary)
