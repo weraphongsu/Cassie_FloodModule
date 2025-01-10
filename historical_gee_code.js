@@ -1,32 +1,89 @@
+// Initialize the map and ROI (Guyana)
+var gaulLevel1 = ee.FeatureCollection("FAO/GAUL/2015/level1");
+var guyana = gaulLevel1.filter(ee.Filter.eq("ADM0_NAME", "Guyana"));
+var roi = guyana.geometry();
 
-		Map.setCenter(97.75360107421875, 13.553886614976648, 7);
-		var geoJsonBoundaryGeometry = ee.Geometry.Polygon([97.75360107421875,13.553886614976648,97.75360107421875,15.304054942239205,99.50454711914062,15.304054942239205,99.50454711914062,13.553886614976648,97.75360107421875,13.553886614976648]);
-		var areaBoundary = ee.FeatureCollection([ee.Feature(geoJsonBoundaryGeometry)]);
+// Extract list of available cities in Guyana
+var rawCityList = guyana.aggregate_array("ADM1_NAME").getInfo();
+var cityList = rawCityList.map(function(name) {
+  return name.replace(/\s*\(region N°\d+\)/, ""); // Clean city names
+});
 
-		var	jrcSurfaceWater = ee.ImageCollection('JRC/GSW1_3/YearlyHistory').filter(ee.Filter.calendarRange(2010, 2010, 'year')).map(function(image) {return image.select('waterClass').eq(3);}).sum().clip(areaBoundary)
-    	jrcSurfaceWater = jrcSurfaceWater.updateMask(jrcSurfaceWater.gt(0)) 
-    	jrcSurfaceWater = jrcSurfaceWater.visualize(min=0, max=1, palette=['#00008B'])
-                   
-    	var jrcSurfaceFlood = ee.ImageCollection('JRC/GSW1_3/YearlyHistory').filter(ee.Filter.calendarRange(2010, 2010, 'year')).map(function(image) {return image.select('waterClass').eq(2);}).sum().clip(areaBoundary)
-    	jrcSurfaceFlood = jrcSurfaceFlood.updateMask(jrcSurfaceFlood.gt(0)) 
-    	jrcSurfaceFlood = jrcSurfaceFlood.visualize(min=0, max=1, palette=['#FD0303'])
+// Define dynamic time period
+var startDate = ee.Date("1984-03-16");
+var endDate = ee.Date("2024-12-31");
 
-		var LCLU = ee.ImageCollection("ESA/WorldCover/v200").first().clip(areaBoundary);
+// Load datasets
+var jrc = ee.ImageCollection("JRC/GSW1_4/MonthlyHistory");
+var srtm = ee.Image("USGS/SRTMGL1_003");
+var worldcover = ee.ImageCollection("ESA/WorldCover/v200").first().select("Map");
+var buildings = ee.FeatureCollection("GOOGLE/Research/open-buildings/v3/polygons");
 
-		var PopulationDensity = ee.Image('CIESIN/GPWv411/GPW_UNWPP-Adjusted_Population_Density/gpw_v4_population_density_adjusted_to_2015_unwpp_country_totals_rev11_2020_30_sec').clip(areaBoundary);
-		PopulationDensity = PopulationDensity.visualize({min : 0.0, max : 1000,  palette : ['ffffe7','FFc869', 'ffac1d','e17735','f2552c', '9f0c21']});
-				
-		var SoilTexture = ee.Image('OpenLandMap/SOL/SOL_TEXTURE-CLASS_USDA-TT_M/v02').clip(areaBoundary).select('b10');
-		SoilTexture = SoilTexture.visualize({min: 1.0, max: 12.0, palette: ['d5c36b','b96947','9d3706','ae868f','f86714','46d143','368f20','3e5a14','ffd557','fff72e','ff5a9d','ff005b']});
-		
-		var HealthCareAccess = ee.Image('Oxford/MAP/accessibility_to_healthcare_2019').select('accessibility').clip(areaBoundary);
-		HealthCareAccess = HealthCareAccess.visualize({  min: 1,  max: 60,  palette: ['FFF8DC', 'FFEBCD', 'FFDEAD', 'F5DEB3', 'DEB887', 'D2B48C', 'CD853F', '8B4513', 'A0522D', '8B4513']});
+// Function to calculate flood frequency
+function calculateFloodFrequency(collection) {
+  collection = collection.map(function(img) {
+    var obs = img.gt(0).rename("obs");
+    var water = img.select("water").eq(2).rename("water");
+    return img.addBands([obs, water]);
+  });
+  var totalObs = collection.select("obs").sum().rename("total_obs");
+  var totalWater = collection.select("water").sum().rename("total_water");
+  return totalWater.divide(totalObs).multiply(100).rename("flood_frequency");
+}
 
-		Map.addLayer(jrcSurfaceWater, {}, 'Permanent Water Data');
-		Map.addLayer(jrcSurfaceFlood, {}, 'Inundated Area Data');
-		Map.addLayer(LCLU, {}, "LCLU");
-		Map.addLayer(PopulationDensity, {}, 'PopulationDensity');
-		Map.addLayer(SoilTexture, {}, 'Soil texture class (USDA system)');
-		Map.addLayer(HealthCareAccess, {}, 'HealthCareAccessibility');
-		Map.addLayer(areaBoundary, {}, 'Boundary');
-		
+// Function to update the map based on user selection
+function updateMap(city, lowLyingThreshold, startDate, endDate, baseMap) {
+  var rawCityName = rawCityList.find(function(name) {
+    return name.includes(city);
+  });
+  var roiCity = guyana.filter(ee.Filter.eq("ADM1_NAME", rawCityName)).geometry();
+
+  // Filter datasets
+  var jrcFiltered = jrc.filterBounds(roiCity).filterDate(startDate, endDate);
+  var permanentWater = ee.Image("JRC/GSW1_4/GlobalSurfaceWater").select("occurrence").gte(90);
+  jrcFiltered = jrcFiltered.map(function(img) {
+    return img.updateMask(permanentWater.not());
+  });
+
+  var floodFrequency = calculateFloodFrequency(jrcFiltered);
+  var slope = ee.Terrain.slope(srtm).rename("slope");
+  var flatArea = slope.lt(5).rename("flat_area");
+  var lowLying = srtm.lt(lowLyingThreshold).rename("low_lying");
+  var floodProneArea = floodFrequency.updateMask(lowLying.and(flatArea));
+
+  // Convert building polygons to centroids
+  var buildingCentroids = buildings.filterBounds(roiCity).map(function(f) {
+    return f.centroid();
+  });
+  var floodedBuildings = buildingCentroids.filterBounds(floodProneArea.geometry());
+  var floodedBuildingCount = floodedBuildings.size().getInfo();
+
+  // Visualization parameters
+  var demVis = { min: 0, max: 50, palette: ["ffffff", "00ff00", "007f00"] };
+  var slopeVis = { min: 0, max: 30, palette: ["ffffff", "ffcc99", "ff3300"] };
+  var floodFrequencyVis = { min: 0, max: 50, palette: ["ffffff", "fffcb8", "0905ff"] };
+  var landcoverVis = {
+    bands: ["Map"],
+    min: 10,
+    max: 100,
+    palette: [
+      "#006400", "#ffbb22", "#ffff4c", "#f096ff", "#fa0000",
+      "#b4b4b4", "#f0f0f0", "#0064c8", "#0096a0", "#00cf75", "#fae6a0"
+    ]
+  };
+
+  // Add layers to the map
+  Map.centerObject(roiCity, 8);
+  Map.addLayer(srtm.clip(roiCity), demVis, "SRTM DEM");
+  Map.addLayer(slope.clip(roiCity), slopeVis, "Slope");
+  Map.addLayer(floodFrequency.clip(roiCity), floodFrequencyVis, "Flood Frequency");
+  Map.addLayer(floodProneArea.clip(roiCity), floodFrequencyVis, "Flood-Prone Areas");
+  Map.addLayer(worldcover.clip(roiCity), landcoverVis, "Land Use (ESA WorldCover)");
+  Map.addLayer(buildingCentroids, { color: "blue" }, "Buildings");
+  Map.addLayer(floodedBuildings, { color: "red" }, "Flooded Buildings");
+
+  print("Flooded Buildings:", floodedBuildingCount);
+}
+
+// Example usage
+updateMap("Region Name", 10, startDate, endDate, "SATELLITE");
