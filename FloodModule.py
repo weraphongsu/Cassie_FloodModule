@@ -153,14 +153,13 @@ flood_prone_fc = ee.FeatureCollection(
 # Buffer before union (simulate error margin)
 flood_prone_fc = flood_prone_fc.map(lambda f: f.buffer(30)).union()
 
-# Get GeoJSON
-flood_prone_geojson = flood_prone_fc.getInfo()
+# # Get GeoJSON
+# flood_prone_geojson = flood_prone_fc.getInfo()
 
-# Define output GeoJSON file path
-# geojson_filename = "D:/SIG/G_CAS/03_Flood/00_RESULT1/flood_prone_area.geojson"
+# # Define output GeoJSON file path
+# geojson_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flood_prone_area1.geojson"
 
 # # Save the GeoJSON data
-# import json
 # with open(geojson_filename, "w") as f:
 #     json.dump(flood_prone_geojson, f)
 
@@ -201,165 +200,155 @@ flooded_buildings = buildings_in_aoi.filterBounds(flood_prone_geom)
 flooded_building_count = flooded_buildings.size().getInfo()
 print(f"✅ Flooded buildings identified: {flooded_building_count}")
 
+### export geojson to Local machine ------------ NOT WORK size limit issue  -----------------
+# # Define file paths
+# aoi_bld_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/aoi_bld.geojson"
+# flooded_bld_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flooded_bld.geojson"
 
+# # Convert FeatureCollections to client-side GeoJSON dictionaries
+# aoi_bld_geojson = buildings_in_aoi.getInfo()  # Convert to Python dict
+# flooded_bld_geojson = flooded_buildings.getInfo()  # Convert to Python dict
 
+# # Save AOI buildings as GeoJSON
+# with open(aoi_bld_filename, "w") as f:
+#     json.dump(aoi_bld_geojson, f)
 
-# print("⏳ Identifying flooded buildings...")
+# print(f"✅ AOI buildings exported as GeoJSON: {aoi_bld_filename}")
 
-# # Filter buildings within the AOI
-# buildings_in_aoi = buildings.filterBounds(roi)
+# # Save Flooded buildings as GeoJSON
+# with open(flooded_bld_filename, "w") as f:
+#     json.dump(flooded_bld_geojson, f)
 
-# # Count total buildings in AOI
-# total_buildings = buildings_in_aoi.size().getInfo()
-# print(f"🔍 Total buildings in AOI: {total_buildings}")
-
-# # Ensure the flood-prone area is a valid geometry
-# flood_prone_geom = flood_prone_area.geometry()
-
-# # 🛠 Use `filter()` with `ee.Filter` to select buildings whose centroid is inside the flood-prone area
-# flooded_buildings = buildings_in_aoi.filter(
-#     ee.Filter.intersects(leftField=".geo", rightValue=flood_prone_geom)
-# )
-
-# # Count flooded buildings
-# flooded_building_count = flooded_buildings.size().getInfo()
-
-# if flooded_building_count > 0:
-#     print(f"✅ Flooded buildings identified: {flooded_building_count}")
-# else:
-#     print("⚠ No flooded buildings detected.")
-
+# print(f"✅ Flooded buildings exported as GeoJSON: {flooded_bld_filename}")
 
 # ##---------------------------------------------------------------------------------------------------##
-# # Convert FeatureCollection to GeoJSON
-# total_buildings_geojson = buildings_in_aoi.getInfo()
-# flooded_buildings_geojson = flooded_buildings.getInfo()
-
-# # # Define file names
-# total_buildings_filename = "total_buildings_aoi"
-# flooded_buildings_filename = "flooded_buildings"
-# # Save total buildings to local machine
-# with open(total_buildings_filename, "w") as f:
-#     json.dump(total_buildings_geojson, f)
-
-# # Save flooded buildings to local machine
-# with open(flooded_buildings_filename, "w") as f:
-#     json.dump(flooded_buildings_geojson, f)
-
-
-# ### expoert to google drive
-# # Export Total Buildings in AOI
-# task_total = ee.batch.Export.table.toDrive(
-#     collection=buildings_in_aoi,
-#     description="Total_Buildings_AOI",
-#     fileNamePrefix=total_buildings_filename,
-#     fileFormat="GeoJSON"
-# )
-# task_total.start()
-
-# # Export Flooded Buildings
-# task_flooded = ee.batch.Export.table.toDrive(
-#     collection=flooded_buildings,
-#     description="Flooded_Buildings",
-#     fileNamePrefix=flooded_buildings_filename,
-#     fileFormat="GeoJSON"
-# )
-# task_flooded.start()
-
-# print(f"✅ Total buildings saved as {total_buildings_filename}")
-# print(f"✅ Flooded buildings saved as {flooded_buildings_filename}")
 
 # ----------------------------- #
 #  FLOODED AREA PER LULC CLASS  #
 # ----------------------------- #
 
-# print("⏳ Calculating flooded area per LULC class...")
+print("⏳ Calculating flooded area per LULC class...")
 
-# # Define LULC classes and their names
-# lulc_mapping = {
-#     10: "Tree cover",
-#     20: "Shrubland",
-#     30: "Grassland",
-#     40: "Cropland",
-#     50: "Built-up",
-#     60: "Bare / sparse vegetation",
-#     70: "Snow and ice",
-#     80: "Permanent water bodies",
-#     90: "Herbaceous wetland",
-#     95: "Mangroves",
-# }
+# Define LULC classes and their names
+lulc_mapping = {
+    10: "Tree cover",
+    20: "Shrubland",
+    30: "Grassland",
+    40: "Cropland",
+    50: "Built-up",
+    60: "Bare / sparse vegetation",
+    70: "Snow and ice",
+    80: "Permanent water bodies",
+    90: "Herbaceous wetland",
+    95: "Mangroves",
+}
 
-# lulc_values = list(lulc_mapping.keys())  # ESA WorldCover classes
-# landcover_masked = worldcover.clip(roi).updateMask(flood_prone_area)
-# area_km2 = []
+lulc_values = list(lulc_mapping.keys())  # ESA WorldCover classes
+landcover_masked = worldcover.clip(roi).updateMask(flood_prone_area)
+area_km2 = []
 
-# for lulc_class in lulc_values:
-#     class_mask = landcover_masked.eq(lulc_class)
-#     area_m2 = class_mask.multiply(ee.Image.pixelArea()).reduceRegion(
-#         reducer=ee.Reducer.sum(),
-#         geometry=roi,
-#         scale=30,
-#         maxPixels=1e13
-#     ).getInfo()
+for lulc_class in lulc_values:
+    class_mask = landcover_masked.eq(lulc_class)
+    area_m2 = class_mask.multiply(ee.Image.pixelArea()).reduceRegion(
+        reducer=ee.Reducer.sum(),
+        geometry=roi,
+        scale=30,
+        maxPixels=1e13
+    ).getInfo()
 
-#     flooded_area_km2 = area_m2.get("Map", 0) / 1e6 if area_m2 else 0  # Convert to km²
+    flooded_area_km2 = area_m2.get("Map", 0) / 1e6 if area_m2 else 0  # Convert to km²
 
-#     # Store in list with LULC class name
-#     area_km2.append({
-#         "LULC_Class": lulc_class,
-#         "LULC_Name": lulc_mapping.get(lulc_class, "Unknown"),
-#         "Flooded_Area_km2": flooded_area_km2
-#     })
+    # Store in list with LULC class name
+    area_km2.append({
+        "LULC_Class": lulc_class,
+        "LULC_Name": lulc_mapping.get(lulc_class, "Unknown"),
+        "Flooded_Area_km²": flooded_area_km2
+    })
 
-# print("✅ Flooded area per LULC class calculated.")
+print("✅ Flooded area per LULC class calculated.")
 
-
-# # # ----------------------------- #
-# # #         EXPORT RESULTS        #
-# # # ----------------------------- #
-
-# print("⏳ Exporting results...")
-
-# ### ## Export Flood-prone Area as GeoJSON to Drive 
-# # export_task = ee.batch.Export.table.toDrive(
-# #     collection=flood_prone_fc,
-# #     description="FloodProne_Area",
-# #     fileFormat="GeoJSON"
-# # )
-# # export_task.start()
-# # print("🚀 Export to Google Drive started! Check Task Manager in GEE.")
-
-# ### export_geojson = ee.batch.Export.table.toDrive(
-# #     collection=flooded_buildings,
-# #     description="Flooded_Buildings_GeoJSON",
-# #     folder="FloodAnalysis",
-# #     fileFormat="GeoJSON"
-# # )
-
-# # export_geojson.start()
-
-# # print("✅ Flooded buildings export started.")
-
-# # 2. Export Flooded Area Per LULC as CSV
-# # Save to CSV
-
-# csv_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/flooded_area_per_lulc3.csv"
-# csv_data = pd.DataFrame(area_km2)
-# csv_data.to_csv(csv_filename, index=False)
-
-# print(f"✅ Flooded area per LULC saved as CSV: {csv_filename}.")
 
 # # ----------------------------- #
-# #         PRINT RESULTS         #
+# #         EXPORT RESULTS        #
 # # ----------------------------- #
 
-# print("\n=== FLOOD ANALYSIS RESULTS ===")
-# print(f"Flooded Buildings: {flooded_building_count}")
+## export to drive 
+
+print('Start Export to drive')
+print("⏳ Exporting Flood-Prone area...")
+export_task = ee.batch.Export.table.toDrive(
+    collection=flood_prone_fc,
+    description="FloodProne_Area",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+export_task.start()
+
+print("⏳ Exporting AOI Building...")
+export_aoi_bld = ee.batch.Export.table.toDrive(
+    collection=buildings_in_aoi,
+    description="AOI_Buildings",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+
+export_aoi_bld.start()
+
+print("⏳ Exporting AOI Building...")
+export_fld_bld = ee.batch.Export.table.toDrive(
+    collection=flooded_buildings,
+    description="Flooded_Buildings",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+
+export_fld_bld.start()
+
+print("⏳ Exporting Flooded area per LULC...")
+
+csv_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flooded_area_per_lulc.csv"
+csv_data = pd.DataFrame(area_km2)
+csv_data.to_csv(csv_filename, index=False)
+print(f"✅ Flooded area per LULC saved as CSV: {csv_filename}.")
+
+
+# --- Export to Google Drive ---
+# Convert DataFrame to a FeatureCollection for GEE export
+features = []
+for row in area_km2:
+    feature = ee.Feature(None, row)  # Convert each row to an EE Feature
+    features.append(feature)
+
+# Create FeatureCollection
+fc = ee.FeatureCollection(features)
+
+# Define Google Drive Export Task
+task = ee.batch.Export.table.toDrive(
+    collection=fc,
+    description="Flooded_Area_Per_LULC",
+    fileFormat="CSV",
+    folder="FloodAnalysis" 
+)
+
+# Start export task
+task.start()
+
+
+
+# ----------------------------- #
+#         PRINT RESULTS         #
+# ----------------------------- #
+
+print("\n=== FLOOD ANALYSIS RESULTS ===")
+print(f"Flooded Buildings: {flooded_building_count}")
 # print("Flooded Area (km²) by LULC Class:")
-# for lulc_class, area in area_km2.items():
-#     print(f"  Class {lulc_class}: {area:.2f} km²")
+# # for lulc_class, area in area_km2.items():
+# #     print(f"  Class {lulc_class}: {area:.2f} km²")
+for entry in area_km2:
+    print(f"  Class {entry['LULC_Class']}: {entry['Flooded_Area_km²']:.2f} km²")
+
 
 # print("\n🚀 Exporting results...")
-# print(f"- Flooded buildings saved as Shapefile & GeoJSON in Google Drive (folder: 'FloodAnalysis').")
+print(f"- Flooded buildings saved as Shapefile & GeoJSON in Google Drive (folder: 'FloodAnalysis').")
 # print(f"- Flooded area per LULC saved as CSV: {csv_filename}.")
-# print("✅ Script execution completed successfully! 🎉")
+
