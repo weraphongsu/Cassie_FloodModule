@@ -1,0 +1,11 @@
+system:index,Flooded_Area_km²,LULC_Class,LULC_Name,.geo
+0,0.1843605504162358,10,Tree cover,"{""type"":""MultiPoint"",""coordinates"":[]}"
+1,0.0,20,Shrubland,"{""type"":""MultiPoint"",""coordinates"":[]}"
+2,0.24418752166748048,30,Grassland,"{""type"":""MultiPoint"",""coordinates"":[]}"
+3,0.7940865804431388,40,Cropland,"{""type"":""MultiPoint"",""coordinates"":[]}"
+4,0.04528573138427734,50,Built-up,"{""type"":""MultiPoint"",""coordinates"":[]}"
+5,0.042622085693359374,60,Bare / sparse vegetation,"{""type"":""MultiPoint"",""coordinates"":[]}"
+6,0.0,70,Snow and ice,"{""type"":""MultiPoint"",""coordinates"":[]}"
+7,5.9253938696188575,80,Permanent water bodies,"{""type"":""MultiPoint"",""coordinates"":[]}"
+8,0.5145692256883808,90,Herbaceous wetland,"{""type"":""MultiPoint"",""coordinates"":[]}"
+9,0.24285557799168006,95,Mangroves,"{""type"":""MultiPoint"",""coordinates"":[]}"

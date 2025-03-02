@@ -200,28 +200,6 @@ flooded_buildings = buildings_in_aoi.filterBounds(flood_prone_geom)
 flooded_building_count = flooded_buildings.size().getInfo()
 print(f"✅ Flooded buildings identified: {flooded_building_count}")
 
-### export geojson to Local machine ------------ NOT WORK size limit issue  -----------------
-# # Define file paths
-# aoi_bld_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/aoi_bld.geojson"
-# flooded_bld_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flooded_bld.geojson"
-
-# # Convert FeatureCollections to client-side GeoJSON dictionaries
-# aoi_bld_geojson = buildings_in_aoi.getInfo()  # Convert to Python dict
-# flooded_bld_geojson = flooded_buildings.getInfo()  # Convert to Python dict
-
-# # Save AOI buildings as GeoJSON
-# with open(aoi_bld_filename, "w") as f:
-#     json.dump(aoi_bld_geojson, f)
-
-# print(f"✅ AOI buildings exported as GeoJSON: {aoi_bld_filename}")
-
-# # Save Flooded buildings as GeoJSON
-# with open(flooded_bld_filename, "w") as f:
-#     json.dump(flooded_bld_geojson, f)
-
-# print(f"✅ Flooded buildings exported as GeoJSON: {flooded_bld_filename}")
-
-# ##---------------------------------------------------------------------------------------------------##
 
 # ----------------------------- #
 #  FLOODED AREA PER LULC CLASS  #
