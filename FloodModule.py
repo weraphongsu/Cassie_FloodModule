@@ -21,7 +21,7 @@ bbox = [-58.024429,6.729363,-57.935249,6.763412]  # Example bounding box
 # OPTION 2: Load a KML file as AOI
 use_kml = not use_bbox  # Switch to True if using KML
 # use_kml = True
-kml_file = "D:/SIG/G_CAS/01_Bathymetry/00_SOURCE1/EPSG4326/_use/aoi.kml"  # Replace with actual KML file path
+kml_file = "/_use/aoi.kml"  # Replace with actual KML file path
 
 # Function to extract geometry from KML
 import geopandas as gpd
@@ -153,20 +153,6 @@ flood_prone_fc = ee.FeatureCollection(
 # Buffer before union (simulate error margin)
 flood_prone_fc = flood_prone_fc.map(lambda f: f.buffer(30)).union()
 
-# # Get GeoJSON
-# flood_prone_geojson = flood_prone_fc.getInfo()
-
-# # Define output GeoJSON file path
-# geojson_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flood_prone_area1.geojson"
-
-# # Save the GeoJSON data
-# with open(geojson_filename, "w") as f:
-#     json.dump(flood_prone_geojson, f)
-
-# print(f"✅ Flood-prone area exported as GeoJSON: {geojson_filename}.")
-
-
-
 # ----------------------------- #
 #   FLOODED BUILDING ANALYSIS   #
 # ----------------------------- #
@@ -283,12 +269,6 @@ export_fld_bld = ee.batch.Export.table.toDrive(
 export_fld_bld.start()
 
 print("⏳ Exporting Flooded area per LULC...")
-
-csv_filename = "/Users/weraphongsuaruang/Python/Cassie_FloodModule/_result/flooded_area_per_lulc.csv"
-csv_data = pd.DataFrame(area_km2)
-csv_data.to_csv(csv_filename, index=False)
-print(f"✅ Flooded area per LULC saved as CSV: {csv_filename}.")
-
 
 # --- Export to Google Drive ---
 # Convert DataFrame to a FeatureCollection for GEE export
