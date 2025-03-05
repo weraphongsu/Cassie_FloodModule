@@ -14,13 +14,12 @@ cassie/
 ***** flood module structure 
 cassie/
 ├── src/
-│   └── algorithms/
-│       ├── acquisition/
-│       ├── flood_analysis/
-│       │   ├── flood_frequency_analysis.py  # Code for flood frequency analysis
-│       │   ├── flood_prone_area_detection.py  # Code for flood-prone area detection
-│       │   ├── flooded_building_analysis.py  # Code for flooded building analysis
-│       │   └── lulc_flooded_area_analysis.py  # Code for flooded area per LULC class
-│       ├── utils/
-│       └── index.js
+│   |── algorithms/
+│   |   ├── acquisition aoi/
+│   |   ├── flood_frequency
+│   |   ├── flood_prone_area
+│   |   ├── flooded_building
+│   |   └── lulc_flooded_area
+│   ├── utils/
+│   └── index.js
 └── algorithms/
