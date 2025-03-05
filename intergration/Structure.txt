@@ -23,3 +23,9 @@ cassie/
 │   ├── utils/
 │   └── index.js
 └── algorithms/
+
+
+yes that's correct... but I think we deivide the steps:
+
+choose aoi. select date and threshold. As the other 
+ parameters is static or predefined.
