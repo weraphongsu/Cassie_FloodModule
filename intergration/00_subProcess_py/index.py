@@ -49,4 +49,73 @@ jrc = jrc.map(lambda img: img.updateMask(permanent_water.Not()))
 print("✅ Applied water mask.")
 
 print("⏳ Calculating flood frequency...")
-flood_frequency = calculate_flood_frequency(jrc, low_lying_threshold)
+print("⏳ Calculating flood frequency...")
+flood_frequency = calculate_flood_frequency(jrc)  #Call the function
+print("✅ Flood frequency calculated.")
+
+print("⏳ Identifying flood-prone areas...")
+flood_prone_area, flood_prone_fc = detect_flood_prone_areas(flood_frequency, srtm, low_lying_threshold, roi)  #Call the function
+print("✅ Flood-prone areas identified.")
+
+total_buildings, flooded_building_count, buildings_in_aoi, flooded_buildings = analyze_flooded_buildings(flood_prone_area, buildings, roi)
+print(f"🔍 Total buildings in AOI: {total_buildings}")
+print(f"✅ Flooded buildings identified: {flooded_building_count}")
+
+print("⏳ Calculating flooded area per LULC class...")
+area_km2 = analyze_lulc_flooded_area(flood_prone_area, worldcover, roi)  #Call the function
+print("✅ Flooded area per LULC class calculated.")
+
+# ----------------------------- #
+#         EXPORT RESULTS        #
+# ----------------------------- #
+
+print("\n🚀 Exporting results...")
+
+# --- Export Flood-Prone Area ---
+print("⏳ Exporting Flood-Prone area...")
+task_flood_prone = ee.batch.Export.table.toDrive(
+    collection=flood_prone_fc,
+    description="FloodProne_Area",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+task_flood_prone.start()
+
+# --- Export Buildings ---
+print("⏳ Exporting AOI Buildings...")
+task_aoi_buildings = ee.batch.Export.table.toDrive(
+    collection=buildings_in_aoi,
+    description="AOI_Buildings",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+task_aoi_buildings.start()
+
+print("⏳ Exporting Flooded Buildings...")
+task_flooded_buildings = ee.batch.Export.table.toDrive(
+    collection=flooded_buildings,
+    description="Flooded_Buildings",
+    folder="FloodAnalysis",
+    fileFormat="GeoJSON"
+)
+task_flooded_buildings.start()
+
+# --- Export Flooded Area per LULC ---
+print("⏳ Exporting Flooded area per LULC...")
+
+# Convert area_km2 to a FeatureCollection
+features = []
+for row in area_km2:
+    feature = ee.Feature(None, row)
+    features.append(feature)
+lulc_fc = ee.FeatureCollection(features)
+
+task_lulc_flooded = ee.batch.Export.table.toDrive(
+    collection=lulc_fc,
+    description="Flooded_Area_Per_LULC",
+    fileFormat="CSV",
+    folder="FloodAnalysis"
+)
+task_lulc_flooded.start()
+
+print("\n=== FLOOD ANALYSIS RESULTS ===")
