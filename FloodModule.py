@@ -236,60 +236,60 @@ print("✅ Flooded area per LULC class calculated.")
 # #         EXPORT RESULTS        #
 # # ----------------------------- #
 
-## export to drive 
+# ## export to drive 
 
-print('Start Export to drive')
-print("⏳ Exporting Flood-Prone area...")
-export_task = ee.batch.Export.table.toDrive(
-    collection=flood_prone_fc,
-    description="FloodProne_Area",
-    folder="FloodAnalysis",
-    fileFormat="GeoJSON"
-)
-export_task.start()
+# print('Start Export to drive')
+# print("⏳ Exporting Flood-Prone area...")
+# export_task = ee.batch.Export.table.toDrive(
+#     collection=flood_prone_fc,
+#     description="FloodProne_Area",
+#     folder="FloodAnalysis",
+#     fileFormat="GeoJSON"
+# )
+# export_task.start()
 
-print("⏳ Exporting AOI Building...")
-export_aoi_bld = ee.batch.Export.table.toDrive(
-    collection=buildings_in_aoi,
-    description="AOI_Buildings",
-    folder="FloodAnalysis",
-    fileFormat="GeoJSON"
-)
+# print("⏳ Exporting AOI Building...")
+# export_aoi_bld = ee.batch.Export.table.toDrive(
+#     collection=buildings_in_aoi,
+#     description="AOI_Buildings",
+#     folder="FloodAnalysis",
+#     fileFormat="GeoJSON"
+# )
 
-export_aoi_bld.start()
+# export_aoi_bld.start()
 
-print("⏳ Exporting AOI Building...")
-export_fld_bld = ee.batch.Export.table.toDrive(
-    collection=flooded_buildings,
-    description="Flooded_Buildings",
-    folder="FloodAnalysis",
-    fileFormat="GeoJSON"
-)
+# print("⏳ Exporting AOI Building...")
+# export_fld_bld = ee.batch.Export.table.toDrive(
+#     collection=flooded_buildings,
+#     description="Flooded_Buildings",
+#     folder="FloodAnalysis",
+#     fileFormat="GeoJSON"
+# )
 
-export_fld_bld.start()
+# export_fld_bld.start()
 
-print("⏳ Exporting Flooded area per LULC...")
+# print("⏳ Exporting Flooded area per LULC...")
 
-# --- Export to Google Drive ---
-# Convert DataFrame to a FeatureCollection for GEE export
-features = []
-for row in area_km2:
-    feature = ee.Feature(None, row)  # Convert each row to an EE Feature
-    features.append(feature)
+# # --- Export to Google Drive ---
+# # Convert DataFrame to a FeatureCollection for GEE export
+# features = []
+# for row in area_km2:
+#     feature = ee.Feature(None, row)  # Convert each row to an EE Feature
+#     features.append(feature)
 
-# Create FeatureCollection
-fc = ee.FeatureCollection(features)
+# # Create FeatureCollection
+# fc = ee.FeatureCollection(features)
 
-# Define Google Drive Export Task
-task = ee.batch.Export.table.toDrive(
-    collection=fc,
-    description="Flooded_Area_Per_LULC",
-    fileFormat="CSV",
-    folder="FloodAnalysis" 
-)
+# # Define Google Drive Export Task
+# task = ee.batch.Export.table.toDrive(
+#     collection=fc,
+#     description="Flooded_Area_Per_LULC",
+#     fileFormat="CSV",
+#     folder="FloodAnalysis" 
+# )
 
-# Start export task
-task.start()
+# # Start export task
+# task.start()
 
 
 
