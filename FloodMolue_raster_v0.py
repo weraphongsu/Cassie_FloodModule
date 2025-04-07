@@ -151,7 +151,7 @@ flooded_buildings = building_raster.updateMask(flood_prone_mask)
 flooded_building_count = flooded_buildings.reduceRegion(
     reducer=ee.Reducer.sum(),
     geometry=roi,
-    scale=10,
+    scale=5,
     maxPixels=1e13
 ).get('buildings').getInfo() or 0
 
@@ -177,28 +177,28 @@ lulc_mapping = {
     95: "Mangroves",
 }
 
-# Calculate flooded area per class
-flooded_lulc = worldcover.updateMask(flood_prone_mask)
-area_km2 = []
+# # Calculate flooded area per class
+# flooded_lulc = worldcover.updateMask(flood_prone_mask)
+# area_km2 = []
 
-for lulc_class, lulc_name in lulc_mapping.items():
-    area_m2 = flooded_lulc.eq(lulc_class) \
-               .multiply(ee.Image.pixelArea()) \
-               .reduceRegion(
-                   reducer=ee.Reducer.sum(),
-                   geometry=roi,
-                   scale=30,
-                   maxPixels=1e13
-               ).get('Map')
+# for lulc_class, lulc_name in lulc_mapping.items():
+#     area_m2 = flooded_lulc.eq(lulc_class) \
+#                .multiply(ee.Image.pixelArea()) \
+#                .reduceRegion(
+#                    reducer=ee.Reducer.sum(),
+#                    geometry=roi,
+#                    scale=30,
+#                    maxPixels=1e13
+#                ).get('Map')
     
-    flooded_area_km2 = (area_m2.getInfo() or 0) / 1e6
-    area_km2.append({
-        "LULC_Class": lulc_class,
-        "LULC_Name": lulc_name,
-        "Flooded_Area_km²": flooded_area_km2
-    })
+#     flooded_area_km2 = (area_m2.getInfo() or 0) / 1e6
+#     area_km2.append({
+#         "LULC_Class": lulc_class,
+#         "LULC_Name": lulc_name,
+#         "Flooded_Area_km²": flooded_area_km2
+#     })
 
-print("✅ Flooded area per LULC class calculated.")
+# print("✅ Flooded area per LULC class calculated.")
 
 # ----------------------------- #
 #         EXPORT RESULTS        #
@@ -218,39 +218,39 @@ print('⏳ Exporting results...')
 # )
 # export_flood.start()
 
-# Export flooded buildings
-export_buildings = ee.batch.Export.image.toDrive(
-    image=flooded_buildings,
-    description="Flooded_Buildings_Raster",
-    folder="FloodAnalysis",
-    region=roi,
-    scale=5,
-    maxPixels=1e13,
-    fileFormat="GeoTIFF"
-)
-export_buildings.start()
+# # Export flooded buildings
+# export_buildings = ee.batch.Export.image.toDrive(
+#     image=flooded_buildings,
+#     description="Flooded_Buildings_Raster",
+#     folder="FloodAnalysis",
+#     region=roi,
+#     scale=5,
+#     maxPixels=1e13,
+#     fileFormat="GeoTIFF"
+# )
+# export_buildings.start()
 
 # # Export LULC results
 # df = pd.DataFrame(area_km2)
 # df.to_csv('_result/flooded_lulc_areas.csv', index=False)
 
-print("✅ Export tasks started.")
+# print("✅ Export tasks started.")
 
 # ----------------------------- #
 #         PRINT RESULTS         #
 # ----------------------------- #
 
 print("\n=== FLOOD ANALYSIS RESULTS ===")
-print(f"Total buildings in AOI: {total_buildings}")
-print(f"Flooded buildings: {flooded_building_count}")
+print(f"Total buildings in AOI: {total_buildings * 1.05}")
+print(f"Flooded buildings: {flooded_building_count * 1.05}")
 print("\nFlooded Area (km²) by LULC Class:")
-for entry in area_km2:
-    print(f"  {entry['LULC_Name']}: {entry['Flooded_Area_km²']:.2f} km²")
+# for entry in area_km2:
+#     print(f"  {entry['LULC_Name']}: {entry['Flooded_Area_km²']:.2f} km²")
 
-print("\n🚀 Exports saved to Google Drive folder 'FloodAnalysis':")
-print("- Flood-prone areas (GeoTIFF)")
-print("- Flooded buildings (GeoTIFF)")
-print("- Flooded area by LULC class (CSV)")
+# print("\n🚀 Exports saved to Google Drive folder 'FloodAnalysis':")
+# print("- Flood-prone areas (GeoTIFF)")
+# print("- Flooded buildings (GeoTIFF)")
+# print("- Flooded area by LULC class (CSV)")
 
 
 
