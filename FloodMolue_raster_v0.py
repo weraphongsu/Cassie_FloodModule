@@ -206,17 +206,17 @@ print("✅ Flooded area per LULC class calculated.")
 
 print('⏳ Exporting results...')
 
-# Export flood-prone area
-export_flood = ee.batch.Export.image.toDrive(
-    image=flood_prone_area,
-    description="FloodProne_Area_Raster",
-    folder="FloodAnalysis",
-    region=roi,
-    scale=30,
-    maxPixels=1e13,
-    fileFormat="GeoTIFF"
-)
-export_flood.start()
+# # Export flood-prone area
+# export_flood = ee.batch.Export.image.toDrive(
+#     image=flood_prone_area,
+#     description="FloodProne_Area_Raster",
+#     folder="FloodAnalysis",
+#     region=roi,
+#     scale=30,
+#     maxPixels=1e13,
+#     fileFormat="GeoTIFF"
+# )
+# export_flood.start()
 
 # Export flooded buildings
 export_buildings = ee.batch.Export.image.toDrive(
@@ -224,15 +224,15 @@ export_buildings = ee.batch.Export.image.toDrive(
     description="Flooded_Buildings_Raster",
     folder="FloodAnalysis",
     region=roi,
-    scale=10,
+    scale=5,
     maxPixels=1e13,
     fileFormat="GeoTIFF"
 )
 export_buildings.start()
 
-# Export LULC results
-df = pd.DataFrame(area_km2)
-df.to_csv('_result/flooded_lulc_areas.csv', index=False)
+# # Export LULC results
+# df = pd.DataFrame(area_km2)
+# df.to_csv('_result/flooded_lulc_areas.csv', index=False)
 
 print("✅ Export tasks started.")
 
